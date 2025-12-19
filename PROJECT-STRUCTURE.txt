@@ -1,0 +1,33 @@
+.
+├── app
+│   ├── Dockerfile
+│   └── index.html
+├── docs
+│   ├── architecture-diagram.md
+│   └── deployment-guide.md
+├── infra
+│   ├── main.tf
+│   ├── modules
+│   │   ├── ecr
+│   │   ├── eks
+│   │   └── vpc
+│   ├── outputs.tf
+│   ├── terraform.tfvars.example
+│   └── variables.tf
+├── Jenkinsfile
+├── manifests
+│   ├── configmap.yaml
+│   ├── deployment.yaml
+│   ├── namespace.yaml
+│   ├── secret.yaml
+│   ├── service-classic.yaml
+│   └── service.yaml
+├── PROJECT-STRUCTURE.txt
+├── PROJECT-SUMMARY.md
+├── QUICKSTART.md
+├── README.md
+└── scripts
+    ├── setup-backend.sh
+    └── validate-deployment.sh
+
+10 directories, 21 files
