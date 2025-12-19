@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devops Academy Calculator - Capstone Project 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* Blue to Purple gradient */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #764ba2;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .calculator {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .display-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .display-section {
+            flex: 1;
+        }
+
+        .display {
+            background: #0f0f1e;
+            color: #00d4ff;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 32px;
+            text-align: right;
+            min-height: 70px;
+            word-wrap: break-word;
+            border: 2px solid #667eea;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-section {
+            flex: 1;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-title {
+            color: #00d4ff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .clear-history {
+            background: #764ba2;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .clear-history:hover {
+            background: #9b59d0;
+            transform: scale(1.05);
+        }
+
+        .history {
+            background: #0f0f1e;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 150px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 2px solid #667eea;
+        }
+
+        .history-item {
+            color: #b8b8d1;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .history-result {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            padding: 25px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .number {
+            background: #2a2a3e;
+            color: white;
+        }
+
+        .number:hover {
+            background: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .operator {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
+        .operator:hover {
+            background: #00f0ff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 212, 255, 0.4);
+        }
+
+        .clear {
+            background: #ff4757;
+            color: white;
+        }
+
+        .clear:hover {
+            background: #ff6b81;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 71, 87, 0.4);
+        }
+
+        .equals {
+            background: #764ba2;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: #9b59d0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(118, 75, 162, 0.4);
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 15px;
+            color: #b8b8d1;
+            font-size: 12px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #764ba2;
+            font-size: 14px;
+        }
+
+        /* Scrollbar styling */
+        .history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history::-webkit-scrollbar-track {
+            background: #0f0f1e;
+        }
+
+        .history::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .history::-webkit-scrollbar-thumb:hover {
+            background: #00d4ff;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GL-Capstone-Project-PAN-2025</h1>
+            <div class="subtitle">GL GlobalLogic Calculator</div>
+        </div>
+
+        <div class="calculator">
+            <div class="display-container">
+                <div class="display-section">
+                    <div class="display" id="display">0</div>
+                </div>
+                <div class="history-section">
+                    <div class="history-header">
+                        <span class="history-title">History</span>
+                        <button class="clear-history" onclick="clearHistory()">Clear</button>
+                    </div>
+                    <div class="history" id="history"></div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="clear" onclick="clearDisplay()">C</button>
+                <button class="operator" onclick="backspace()">⌫</button>
+                <button class="operator" onclick="appendOperator('%')">%</button>
+                <button class="operator" onclick="appendOperator('+')">+</button>
+
+                <button class="number" onclick="appendNumber('7')">7</button>
+                <button class="number" onclick="appendNumber('8')">8</button>
+                <button class="number" onclick="appendNumber('9')">9</button>
+                <button class="operator" onclick="appendOperator('*')">×</button>
+
+                <button class="number" onclick="appendNumber('4')">4</button>
+                <button class="number" onclick="appendNumber('5')">5</button>
+                <button class="number" onclick="appendNumber('6')">6</button>
+                <button class="operator" onclick="appendOperator('-')">-</button>
+
+                <button class="number" onclick="appendNumber('1')">1</button>
+                <button class="number" onclick="appendNumber('2')">2</button>
+                <button class="number" onclick="appendNumber('3')">3</button>
+                <button class="operator" onclick="appendOperator('+')">+</button>
+
+                <button class="number zero" onclick="appendNumber('0')">0</button>
+                <button class="number" onclick="appendNumber('.')">.</button>
+
+                <button class="equals" onclick="calculate()">=</button>
+            </div>
+
+            <div class="keyboard-hint">
+                Supports keyboard: digits, + - × ÷ %, Enter (=), Backspace (⌫), Esc (C)
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🚀 Deployed on AWS EKS | DevOps Capstone Project 2025</p>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let currentInput = '0';
+        let history = [];
+
+        function updateDisplay() {
+            display.textContent = currentInput || '0';
+        }
+
+        function appendNumber(number) {
+            if (currentInput === '0' || currentInput === 'Error') {
+                currentInput = number;
+            } else {
+                currentInput += number;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(operator) {
+            if (currentInput === 'Error') {
+                currentInput = '0';
+            }
+            const lastChar = currentInput[currentInput.length - 1];
+            if ('+-*/%'.includes(lastChar)) {
+                currentInput = currentInput.slice(0, -1) + operator;
+            } else {
+                currentInput += operator;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentInput = '0';
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentInput === 'Error') {
+                currentInput = '0';
+            } else {
+                currentInput = currentInput.slice(0, -1) || '0';
+            }
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                const expression = currentInput.replace('×', '*').replace('÷', '/');
+                const result = eval(expression);
+                
+                if (!isFinite(result)) {
+                    currentInput = 'Error';
+                } else {
+                    addToHistory(currentInput + ' = ' + result);
+                    currentInput = result.toString();
+                }
+            } catch (error) {
+                currentInput = 'Error';
+            }
+            updateDisplay();
+        }
+
+        function addToHistory(entry) {
+            history.unshift(entry);
+            if (history.length > 10) {
+                history.pop();
+            }
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.map(item => {
+                const parts = item.split(' = ');
+                return `<div class="history-item">${parts[0]} <span class="history-result">= ${parts[1]}</span></div>`;
+            }).join('');
+        }
+
+        function clearHistory() {
+            history = [];
+            updateHistoryDisplay();
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (key >= '0' && key <= '9' || key === '.') {
+                appendNumber(key);
+            } else if (key === '+' || key === '-' || key === '*' || key === '/' || key === '%') {
+                appendOperator(key);
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Backspace') {
+                event.preventDefault();
+                backspace();
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                clearDisplay();
+            }
+        });
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
