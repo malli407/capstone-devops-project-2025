@@ -13,7 +13,7 @@ terraform {
   }
   
   backend "s3" {
-    bucket         = "capstone-terraform-state-bucket"
+    bucket         = "capstone-terraform-locks-740818486063"
     key            = "terraform/state.tfstate"
     region         = "ap-south-1"
     dynamodb_table = "capstone-terraform-locks"
