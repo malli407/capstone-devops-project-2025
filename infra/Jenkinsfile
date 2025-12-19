@@ -1,0 +1,410 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'ap-south-1'
+        CLUSTER_NAME = 'capstone-project-eks-cluster'
+        ECR_REPO_NAME = 'capstone-app-repo'
+        APP_NAME = 'nginx-app'
+        TERRAFORM_VERSION = '1.13.0'
+        S3_BUCKET = 'capstone-terraform-state-bucket'
+        DYNAMODB_TABLE = 'capstone-terraform-locks'
+    }
+    
+    parameters {
+        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Terraform action to perform')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip security testing')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "git rev-parse --short=7 HEAD",
+                        returnStdout: true
+                    ).trim()
+                    echo "Git commit: ${env.GIT_COMMIT_SHORT}"
+                }
+            }
+        }
+        
+        stage('Ensure Terraform Backend') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        echo "Ensuring S3 bucket ${S3_BUCKET} exists..."
+                        if ! aws s3 ls "s3://${S3_BUCKET}" 2>&1 | grep -q 'NoSuchBucket'; then
+                            echo "Bucket exists"
+                        else
+                            echo "Creating bucket..."
+                            aws s3 mb "s3://${S3_BUCKET}" --region ${AWS_REGION}
+                            aws s3api put-bucket-versioning \
+                                --bucket ${S3_BUCKET} \
+                                --versioning-configuration Status=Enabled
+                            aws s3api put-bucket-encryption \
+                                --bucket ${S3_BUCKET} \
+                                --server-side-encryption-configuration \
+                                '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+                        fi
+                        
+                        echo "Ensuring DynamoDB table ${DYNAMODB_TABLE} exists..."
+                        if aws dynamodb describe-table --table-name ${DYNAMODB_TABLE} 2>&1 | grep -q 'ResourceNotFoundException'; then
+                            echo "Creating DynamoDB table..."
+                            aws dynamodb create-table \
+                                --table-name ${DYNAMODB_TABLE} \
+                                --attribute-definitions AttributeName=LockID,AttributeType=S \
+                                --key-schema AttributeName=LockID,KeyType=HASH \
+                                --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+                                --region ${AWS_REGION}
+                            echo "Waiting for table to be active..."
+                            aws dynamodb wait table-exists --table-name ${DYNAMODB_TABLE}
+                        else
+                            echo "Table exists"
+                        fi
+                    '''
+                }
+            }
+        }
+        
+        stage('SAST & Manifest Lint') {
+            when {
+                expression { !params.SKIP_TESTS }
+            }
+            parallel {
+                stage('Trivy Filesystem Scan') {
+                    steps {
+                        sh '''
+                            echo "Running Trivy filesystem scan (HIGH,CRITICAL)..."
+                            trivy fs --severity HIGH,CRITICAL --exit-code 0 . || true
+                        '''
+                    }
+                }
+                stage('Kubeval Lint') {
+                    steps {
+                        sh '''
+                            echo "Linting Kubernetes manifests with kubeval..."
+                            for file in manifests/*.yaml; do
+                                echo "Validating $file"
+                                docker run --rm -v $(pwd)/manifests:/manifests \
+                                    garethr/kubeval:latest /manifests/$(basename $file) || true
+                            done
+                        '''
+                    }
+                }
+                stage('Kube-linter') {
+                    steps {
+                        sh '''
+                            echo "Running kube-linter for additional checks..."
+                            docker run --rm -v $(pwd)/manifests:/manifests \
+                                stackrox/kube-linter:latest lint /manifests || true
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Tools Versions') {
+            steps {
+                sh '''
+                    echo "Checking tool versions..."
+                    aws --version || echo "AWS CLI not found"
+                    terraform --version || echo "Terraform not found"
+                    kubectl version --client || echo "kubectl not found"
+                    docker --version || echo "Docker not found"
+                '''
+            }
+        }
+        
+        stage('AWS Identity Check') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        echo "Checking AWS identity..."
+                        aws sts get-caller-identity
+                    '''
+                }
+            }
+        }
+        
+        stage('Terraform Init/Plan/Apply') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir('infra') {
+                    withCredentials([
+                        string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                        string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                    ]) {
+                        sh '''
+                            echo "Initializing Terraform..."
+                            terraform init
+                            
+                            echo "Selecting/creating workspace..."
+                            terraform workspace select dev || terraform workspace new dev
+                            
+                            echo "Planning infrastructure..."
+                            terraform plan -out=tfplan
+                            
+                            echo "Applying infrastructure..."
+                            terraform apply -auto-approve tfplan
+                            
+                            echo "Terraform outputs:"
+                            terraform output
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Terraform Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                dir('infra') {
+                    withCredentials([
+                        string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                        string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                    ]) {
+                        sh '''
+                            echo "Initializing Terraform..."
+                            terraform init
+                            
+                            echo "Selecting workspace..."
+                            terraform workspace select dev
+                            
+                            echo "Destroying infrastructure..."
+                            terraform destroy -auto-approve
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Docker Build and Push to ECR') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                script {
+                    def ecrRepoUrl = sh(
+                        script: "cd infra && terraform output -json ecr_repo_urls | jq -r '.\"${ECR_REPO_NAME}\"'",
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (ecrRepoUrl == null || ecrRepoUrl == '') {
+                        error("Failed to get ECR repository URL")
+                    }
+                    
+                    env.ECR_REPO_URL = ecrRepoUrl
+                    env.IMAGE_TAG = "${env.GIT_COMMIT_SHORT}"
+                    
+                    echo "ECR Repository URL: ${env.ECR_REPO_URL}"
+                    echo "Image Tag: ${env.IMAGE_TAG}"
+                }
+                
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        # Extract registry from ECR URL
+                        ECR_REGISTRY=$(echo ${ECR_REPO_URL} | cut -d'/' -f1)
+                        
+                        echo "Logging in to ECR..."
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                            docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        
+                        echo "Building Docker image..."
+                        cd app
+                        docker build -t ${ECR_REPO_NAME}:${IMAGE_TAG} .
+                        
+                        echo "Tagging image for ECR..."
+                        docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} ${ECR_REPO_URL}:${IMAGE_TAG}
+                        docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} ${ECR_REPO_URL}:latest
+                        
+                        echo "Pushing image to ECR..."
+                        docker push ${ECR_REPO_URL}:${IMAGE_TAG}
+                        docker push ${ECR_REPO_URL}:latest
+                        
+                        echo "Cleaning up local images..."
+                        docker rmi ${ECR_REPO_NAME}:${IMAGE_TAG} || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Scan ECR Image') {
+            when {
+                allOf {
+                    expression { params.ACTION == 'apply' }
+                    expression { !params.SKIP_TESTS }
+                }
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        echo "Scanning pushed image with Trivy..."
+                        trivy image --severity HIGH,CRITICAL --exit-code 0 ${ECR_REPO_URL}:${IMAGE_TAG} || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy to EKS') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        echo "Updating kubeconfig..."
+                        aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_REGION}
+                        
+                        echo "Verifying cluster access..."
+                        kubectl get nodes
+                        
+                        echo "Applying Kubernetes manifests..."
+                        kubectl apply -f manifests/namespace.yaml
+                        kubectl apply -f manifests/configmap.yaml
+                        kubectl apply -f manifests/secret.yaml
+                        kubectl apply -f manifests/deployment.yaml
+                        kubectl apply -f manifests/service-classic.yaml
+                        
+                        echo "Waiting for pods to be ready..."
+                        kubectl wait --for=condition=ready pod -l app=nginx -n app --timeout=300s || true
+                        
+                        echo "Current pods:"
+                        kubectl get pods -n app
+                        
+                        echo "Waiting for Load Balancer to be provisioned..."
+                        sleep 60
+                        
+                        echo "Getting service details..."
+                        kubectl get svc nginx-service -n app
+                        
+                        ELB_HOSTNAME=$(kubectl get svc nginx-service -n app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+                        if [ -n "$ELB_HOSTNAME" ]; then
+                            echo "Service ELB hostname: ${ELB_HOSTNAME}"
+                            echo "${ELB_HOSTNAME}" > elb-hostname.txt
+                        else
+                            echo "Warning: ELB hostname not yet available"
+                        fi
+                    '''
+                }
+            }
+        }
+        
+        stage('Rollout ECR Image') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        echo "Updating deployment with new image..."
+                        aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_REGION}
+                        
+                        kubectl set image deployment/nginx-deployment \
+                            nginx=${ECR_REPO_URL}:${IMAGE_TAG} -n app
+                        
+                        echo "Waiting for rollout to complete..."
+                        kubectl rollout status deployment/nginx-deployment -n app --timeout=300s
+                        
+                        echo "Deployment status:"
+                        kubectl get deployment nginx-deployment -n app
+                        kubectl get pods -n app
+                    '''
+                }
+            }
+        }
+        
+        stage('DAST - ZAP Baseline') {
+            when {
+                allOf {
+                    expression { params.ACTION == 'apply' }
+                    expression { !params.SKIP_TESTS }
+                }
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh '''
+                        echo "Getting application URL..."
+                        aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_REGION}
+                        
+                        APP_URL=$(kubectl get svc nginx-service -n app -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+                        
+                        if [ -z "$APP_URL" ]; then
+                            echo "Warning: Application URL not available yet, skipping DAST"
+                            exit 0
+                        fi
+                        
+                        echo "Application URL: http://${APP_URL}"
+                        
+                        echo "Pulling ZAP Docker image..."
+                        docker pull ghcr.io/zaproxy/zaproxy:stable
+                        
+                        echo "Running OWASP ZAP baseline scan..."
+                        docker run --rm \
+                            -v $(pwd):/zap/wrk:rw \
+                            ghcr.io/zaproxy/zaproxy:stable \
+                            zap-baseline.py \
+                            -t http://${APP_URL} \
+                            -r zap-report.html \
+                            -I || echo "ZAP scan completed with findings (non-blocking)"
+                    '''
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'zap-report.html', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+            script {
+                if (fileExists('elb-hostname.txt')) {
+                    def elbHostname = readFile('elb-hostname.txt').trim()
+                    echo "===================================="
+                    echo "Application URL: http://${elbHostname}"
+                    echo "===================================="
+                }
+            }
+        }
+        success {
+            echo '✓ Pipeline succeeded!'
+        }
+        failure {
+            echo '✗ Pipeline failed!'
+        }
+        cleanup {
+            cleanWs()
+        }
+    }
+}
+
