@@ -1,0 +1,53 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform backend files
+terraform.tfstate.d/
+
+# SSH Keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# Secrets
+secrets/
+secret.yaml
+*.crt
+.env
+
+# Trivy cache
+.trivy-cache/
+
+# ZAP artifacts
+zap-artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.backup
+*.old
