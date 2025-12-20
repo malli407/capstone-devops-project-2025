@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Devops Academy Calculator - Capstone Project 2025</title>
+    <title>Tic-Tac-Toe Game - DevOps Capstone Project</title>
     <style>
         * {
             margin: 0;
@@ -14,230 +14,23 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            /* Blue to Purple gradient */
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             padding: 20px;
         }
 
-        .container {
+        .game-container {
             background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
             padding: 40px;
-            border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
+            animation: fadeIn 0.5s ease-in;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            color: #667eea;
-            font-size: 28px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            color: #764ba2;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .calculator {
-            background: #1a1a2e;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .display-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .display-section {
-            flex: 1;
-        }
-
-        .display {
-            background: #0f0f1e;
-            color: #00d4ff;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 32px;
-            text-align: right;
-            min-height: 70px;
-            word-wrap: break-word;
-            border: 2px solid #667eea;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .history-section {
-            flex: 1;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .history-title {
-            color: #00d4ff;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .clear-history {
-            background: #764ba2;
-            color: white;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s;
-        }
-
-        .clear-history:hover {
-            background: #9b59d0;
-            transform: scale(1.05);
-        }
-
-        .history {
-            background: #0f0f1e;
-            padding: 15px;
-            border-radius: 10px;
-            min-height: 150px;
-            max-height: 150px;
-            overflow-y: auto;
-            border: 2px solid #667eea;
-        }
-
-        .history-item {
-            color: #b8b8d1;
-            font-size: 14px;
-            margin-bottom: 8px;
-            padding: 5px;
-            border-bottom: 1px solid #2a2a3e;
-        }
-
-        .history-result {
-            color: #00d4ff;
-            font-weight: 600;
-        }
-
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
-        button {
-            padding: 25px;
-            font-size: 20px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        button:active {
-            transform: scale(0.95);
-        }
-
-        .number {
-            background: #2a2a3e;
-            color: white;
-        }
-
-        .number:hover {
-            background: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .operator {
-            background: #00d4ff;
-            color: #1a1a2e;
-        }
-
-        .operator:hover {
-            background: #00f0ff;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 212, 255, 0.4);
-        }
-
-        .clear {
-            background: #ff4757;
-            color: white;
-        }
-
-        .clear:hover {
-            background: #ff6b81;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(255, 71, 87, 0.4);
-        }
-
-        .equals {
-            background: #764ba2;
-            color: white;
-            grid-column: span 2;
-        }
-
-        .equals:hover {
-            background: #9b59d0;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(118, 75, 162, 0.4);
-        }
-
-        .zero {
-            grid-column: span 2;
-        }
-
-        .keyboard-hint {
-            text-align: center;
-            margin-top: 15px;
-            color: #b8b8d1;
-            font-size: 12px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #764ba2;
-            font-size: 14px;
-        }
-
-        /* Scrollbar styling */
-        .history::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .history::-webkit-scrollbar-track {
-            background: #0f0f1e;
-        }
-
-        .history::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 3px;
-        }
-
-        .history::-webkit-scrollbar-thumb:hover {
-            background: #00d4ff;
-        }
-
-        /* Animation */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -249,173 +42,558 @@
             }
         }
 
-        .container {
-            animation: fadeIn 0.5s ease-out;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .score-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            flex: 1;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .score-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .score-card h3 {
+            font-size: 1em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .score-card .score {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .current-player {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e7ff 100%);
+            border: none;
+            border-radius: 20px;
+            font-size: 3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+        }
+
+        .cell:hover:not(.taken) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .cell.taken {
+            cursor: not-allowed;
+        }
+
+        .cell.x {
+            color: #667eea;
+            animation: popIn 0.3s ease;
+        }
+
+        .cell.o {
+            color: #f5576c;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .cell.winning {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+            animation: winningCell 0.6s ease infinite;
+        }
+
+        @keyframes winningCell {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-new-game {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-new-game:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-reset-score {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-reset-score:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-content p {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .cell {
+                font-size: 2em;
+            }
+
+            .scoreboard {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="game-container">
         <div class="header">
-            <h1>GL-Capstone-Project-PAN-2025</h1>
-            <div class="subtitle">GL GlobalLogic Calculator</div>
+            <h1>🎮 Tic-Tac-Toe</h1>
+            <p>DevOps Capstone Project - Deployed on AWS EKS</p>
         </div>
 
-        <div class="calculator">
-            <div class="display-container">
-                <div class="display-section">
-                    <div class="display" id="display">0</div>
-                </div>
-                <div class="history-section">
-                    <div class="history-header">
-                        <span class="history-title">History</span>
-                        <button class="clear-history" onclick="clearHistory()">Clear</button>
-                    </div>
-                    <div class="history" id="history"></div>
-                </div>
+        <div class="scoreboard">
+            <div class="score-card">
+                <h3>Player X</h3>
+                <div class="score" id="scoreX">0</div>
             </div>
-
-            <div class="buttons">
-                <button class="clear" onclick="clearDisplay()">C</button>
-                <button class="operator" onclick="backspace()">⌫</button>
-                <button class="operator" onclick="appendOperator('%')">%</button>
-                <button class="operator" onclick="appendOperator('+')">+</button>
-
-                <button class="number" onclick="appendNumber('7')">7</button>
-                <button class="number" onclick="appendNumber('8')">8</button>
-                <button class="number" onclick="appendNumber('9')">9</button>
-                <button class="operator" onclick="appendOperator('*')">×</button>
-
-                <button class="number" onclick="appendNumber('4')">4</button>
-                <button class="number" onclick="appendNumber('5')">5</button>
-                <button class="number" onclick="appendNumber('6')">6</button>
-                <button class="operator" onclick="appendOperator('-')">-</button>
-
-                <button class="number" onclick="appendNumber('1')">1</button>
-                <button class="number" onclick="appendNumber('2')">2</button>
-                <button class="number" onclick="appendNumber('3')">3</button>
-                <button class="operator" onclick="appendOperator('+')">+</button>
-
-                <button class="number zero" onclick="appendNumber('0')">0</button>
-                <button class="number" onclick="appendNumber('.')">.</button>
-
-                <button class="equals" onclick="calculate()">=</button>
+            <div class="score-card">
+                <h3>Draws</h3>
+                <div class="score" id="scoreDraw">0</div>
             </div>
-
-            <div class="keyboard-hint">
-                Supports keyboard: digits, + - × ÷ %, Enter (=), Backspace (⌫), Esc (C)
+            <div class="score-card">
+                <h3>Player O</h3>
+                <div class="score" id="scoreO">0</div>
             </div>
+        </div>
+
+        <div class="current-player" id="currentPlayer">
+            Current Turn: Player X
+        </div>
+
+        <div class="board" id="board">
+            <button class="cell" data-index="0"></button>
+            <button class="cell" data-index="1"></button>
+            <button class="cell" data-index="2"></button>
+            <button class="cell" data-index="3"></button>
+            <button class="cell" data-index="4"></button>
+            <button class="cell" data-index="5"></button>
+            <button class="cell" data-index="6"></button>
+            <button class="cell" data-index="7"></button>
+            <button class="cell" data-index="8"></button>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-new-game" id="newGameBtn">New Game</button>
+            <button class="btn btn-reset-score" id="resetScoreBtn">Reset Score</button>
         </div>
 
         <div class="footer">
-            <p>🚀 Deployed on AWS EKS | DevOps Capstone Project 2025</p>
+            <p>Powered by <a href="#">AWS EKS</a> • Deployed via <a href="#">Jenkins CI/CD</a></p>
+            <p>GlobalLogic DevOps Capstone Project 2025</p>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div class="modal" id="winnerModal">
+        <div class="modal-content">
+            <h2 id="winnerText">🎉</h2>
+            <p id="winnerMessage">Player X Wins!</p>
+            <button class="btn btn-new-game" onclick="closeModal()">Play Again</button>
         </div>
     </div>
 
     <script>
-        let display = document.getElementById('display');
-        let currentInput = '0';
-        let history = [];
+        // Game State
+        let currentPlayer = 'X';
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let scores = {
+            X: 0,
+            O: 0,
+            draw: 0
+        };
 
-        function updateDisplay() {
-            display.textContent = currentInput || '0';
-        }
+        // DOM Elements
+        const cells = document.querySelectorAll('.cell');
+        const currentPlayerDisplay = document.getElementById('currentPlayer');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const resetScoreBtn = document.getElementById('resetScoreBtn');
+        const winnerModal = document.getElementById('winnerModal');
+        const winnerText = document.getElementById('winnerText');
+        const winnerMessage = document.getElementById('winnerMessage');
+        const scoreXDisplay = document.getElementById('scoreX');
+        const scoreODisplay = document.getElementById('scoreO');
+        const scoreDrawDisplay = document.getElementById('scoreDraw');
 
-        function appendNumber(number) {
-            if (currentInput === '0' || currentInput === 'Error') {
-                currentInput = number;
-            } else {
-                currentInput += number;
+        // Winning Combinations
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        // Load scores from localStorage
+        function loadScores() {
+            const savedScores = localStorage.getItem('ticTacToeScores');
+            if (savedScores) {
+                scores = JSON.parse(savedScores);
+                updateScoreDisplay();
             }
-            updateDisplay();
         }
 
-        function appendOperator(operator) {
-            if (currentInput === 'Error') {
-                currentInput = '0';
+        // Save scores to localStorage
+        function saveScores() {
+            localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+        }
+
+        // Update score display
+        function updateScoreDisplay() {
+            scoreXDisplay.textContent = scores.X;
+            scoreODisplay.textContent = scores.O;
+            scoreDrawDisplay.textContent = scores.draw;
+        }
+
+        // Handle cell click
+        function handleCellClick(e) {
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
+
+            if (board[index] !== '' || !gameActive) {
+                return;
             }
-            const lastChar = currentInput[currentInput.length - 1];
-            if ('+-*/%'.includes(lastChar)) {
-                currentInput = currentInput.slice(0, -1) + operator;
-            } else {
-                currentInput += operator;
+
+            // Update board state
+            board[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add('taken', currentPlayer.toLowerCase());
+
+            // Check for winner or draw
+            if (checkWinner()) {
+                gameActive = false;
+                highlightWinningCells();
+                scores[currentPlayer]++;
+                saveScores();
+                updateScoreDisplay();
+                showWinnerModal(`Player ${currentPlayer} Wins! 🎉`);
+                createConfetti();
+                return;
             }
-            updateDisplay();
-        }
 
-        function clearDisplay() {
-            currentInput = '0';
-            updateDisplay();
-        }
-
-        function backspace() {
-            if (currentInput === 'Error') {
-                currentInput = '0';
-            } else {
-                currentInput = currentInput.slice(0, -1) || '0';
+            if (board.every(cell => cell !== '')) {
+                gameActive = false;
+                scores.draw++;
+                saveScores();
+                updateScoreDisplay();
+                showWinnerModal("It's a Draw! 🤝");
+                return;
             }
-            updateDisplay();
+
+            // Switch player
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            updateCurrentPlayerDisplay();
         }
 
-        function calculate() {
-            try {
-                const expression = currentInput.replace('×', '*').replace('÷', '/');
-                const result = eval(expression);
-                
-                if (!isFinite(result)) {
-                    currentInput = 'Error';
-                } else {
-                    addToHistory(currentInput + ' = ' + result);
-                    currentInput = result.toString();
+        // Check for winner
+        function checkWinner() {
+            return winningCombinations.some(combination => {
+                const [a, b, c] = combination;
+                return board[a] !== '' && 
+                       board[a] === board[b] && 
+                       board[a] === board[c];
+            });
+        }
+
+        // Highlight winning cells
+        function highlightWinningCells() {
+            winningCombinations.forEach(combination => {
+                const [a, b, c] = combination;
+                if (board[a] !== '' && board[a] === board[b] && board[a] === board[c]) {
+                    cells[a].classList.add('winning');
+                    cells[b].classList.add('winning');
+                    cells[c].classList.add('winning');
                 }
-            } catch (error) {
-                currentInput = 'Error';
+            });
+        }
+
+        // Update current player display
+        function updateCurrentPlayerDisplay() {
+            currentPlayerDisplay.textContent = `Current Turn: Player ${currentPlayer}`;
+        }
+
+        // Show winner modal
+        function showWinnerModal(message) {
+            setTimeout(() => {
+                winnerText.textContent = message.includes('Wins') ? '🎉' : '🤝';
+                winnerMessage.textContent = message;
+                winnerModal.classList.add('show');
+            }, 800);
+        }
+
+        // Close modal
+        function closeModal() {
+            winnerModal.classList.remove('show');
+            newGame();
+        }
+
+        // Start new game
+        function newGame() {
+            currentPlayer = 'X';
+            board = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('taken', 'x', 'o', 'winning');
+            });
+            updateCurrentPlayerDisplay();
+        }
+
+        // Reset scores
+        function resetScore() {
+            if (confirm('Are you sure you want to reset all scores?')) {
+                scores = { X: 0, O: 0, draw: 0 };
+                saveScores();
+                updateScoreDisplay();
             }
-            updateDisplay();
         }
 
-        function addToHistory(entry) {
-            history.unshift(entry);
-            if (history.length > 10) {
-                history.pop();
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
             }
-            updateHistoryDisplay();
         }
 
-        function updateHistoryDisplay() {
-            const historyDiv = document.getElementById('history');
-            historyDiv.innerHTML = history.map(item => {
-                const parts = item.split(' = ');
-                return `<div class="history-item">${parts[0]} <span class="history-result">= ${parts[1]}</span></div>`;
-            }).join('');
-        }
+        // Event Listeners
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
+        });
 
-        function clearHistory() {
-            history = [];
-            updateHistoryDisplay();
-        }
+        newGameBtn.addEventListener('click', newGame);
+        resetScoreBtn.addEventListener('click', resetScore);
 
-        // Keyboard support
-        document.addEventListener('keydown', function(event) {
-            const key = event.key;
-            
-            if (key >= '0' && key <= '9' || key === '.') {
-                appendNumber(key);
-            } else if (key === '+' || key === '-' || key === '*' || key === '/' || key === '%') {
-                appendOperator(key);
-            } else if (key === 'Enter' || key === '=') {
-                event.preventDefault();
-                calculate();
-            } else if (key === 'Backspace') {
-                event.preventDefault();
-                backspace();
-            } else if (key === 'Escape' || key === 'c' || key === 'C') {
-                clearDisplay();
+        // Initialize game
+        loadScores();
+        updateCurrentPlayerDisplay();
+
+        // Close modal on background click
+        winnerModal.addEventListener('click', (e) => {
+            if (e.target === winnerModal) {
+                closeModal();
             }
         });
 
-        // Initialize display
-        updateDisplay();
+        // Console message
+        console.log('%c🎮 Tic-Tac-Toe Game Loaded Successfully!', 'color: #667eea; font-size: 20px; font-weight: bold;');
+        console.log('%cDeployed on AWS EKS via Jenkins CI/CD', 'color: #764ba2; font-size: 14px;');
     </script>
 </body>
 </html>
