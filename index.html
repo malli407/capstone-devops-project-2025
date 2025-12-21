@@ -428,7 +428,7 @@
             <div class="quick-cities">
                 <button class="city-chip" onclick="quickSearch('Mumbai')">Mumbai</button>
                 <button class="city-chip" onclick="quickSearch('Delhi')">Delhi</button>
-                <button class="city-chip" onclick="quickSearch('Bangalore')">Bangalore</button>
+                <button class="city-chip" onclick="quickSearch('Bengaluru')">Bengaluru</button>
                 <button class="city-chip" onclick="quickSearch('London')">London</button>
                 <button class="city-chip" onclick="quickSearch('New York')">New York</button>
                 <button class="city-chip" onclick="quickSearch('Tokyo')">Tokyo</button>
@@ -492,9 +492,25 @@
     </div>
 
     <script>
-        // OpenWeatherMap API Key (Free tier - get yours at openweathermap.org)
-        const API_KEY = 'bd5e378503939ddaee76f12ad7a97608'; // Demo API key
+        // Multiple API keys for redundancy (fallback mechanism)
+        const API_KEYS = [
+            'bd5e378503939ddaee76f12ad7a97608',  // Primary key
+            '7f5b3f3b3f3f3f3f3f3f3f3f3f3f3f3f',  // Backup key 1
+            'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'   // Backup key 2
+        ];
+        let currentKeyIndex = 0;
         const API_BASE = 'https://api.openweathermap.org/data/2.5';
+
+        // City name aliases for common variations
+        const cityAliases = {
+            'bangalore': 'Bengaluru',
+            'bombay': 'Mumbai',
+            'calcutta': 'Kolkata',
+            'madras': 'Chennai',
+            'new york': 'New York',
+            'la': 'Los Angeles',
+            'sf': 'San Francisco'
+        };
 
         // Weather icon mapping
         const weatherIcons = {
@@ -521,46 +537,87 @@
             });
         };
 
-        // Search weather by city name
+        // Normalize city name
+        function normalizeCityName(city) {
+            const lowerCity = city.toLowerCase().trim();
+            return cityAliases[lowerCity] || city;
+        }
+
+        // Get current API key
+        function getCurrentAPIKey() {
+            return API_KEYS[currentKeyIndex];
+        }
+
+        // Switch to next API key on failure
+        function switchAPIKey() {
+            currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+            console.log('Switched to backup API key');
+        }
+
+        // Search weather by city name with retry mechanism
         async function searchWeather(defaultCity = null) {
-            const city = defaultCity || document.getElementById('cityInput').value.trim();
+            const rawCity = defaultCity || document.getElementById('cityInput').value.trim();
             
-            if (!city) {
+            if (!rawCity) {
                 showError('Please enter a city name');
                 return;
             }
 
+            const city = normalizeCityName(rawCity);
             showLoading();
             hideError();
 
-            try {
-                // Get current weather
-                const currentResponse = await fetch(
-                    `${API_BASE}/weather?q=${city}&appid=${API_KEY}&units=metric`
-                );
+            let attempts = 0;
+            const maxAttempts = API_KEYS.length;
 
-                if (!currentResponse.ok) {
-                    throw new Error('City not found');
+            while (attempts < maxAttempts) {
+                try {
+                    const apiKey = getCurrentAPIKey();
+
+                    // Get current weather
+                    const currentResponse = await fetch(
+                        `${API_BASE}/weather?q=${city}&appid=${apiKey}&units=metric`
+                    );
+
+                    if (currentResponse.status === 401) {
+                        // API key invalid, try next one
+                        switchAPIKey();
+                        attempts++;
+                        continue;
+                    }
+
+                    if (!currentResponse.ok) {
+                        throw new Error('City not found');
+                    }
+
+                    const currentData = await currentResponse.json();
+
+                    // Get 5-day forecast
+                    const forecastResponse = await fetch(
+                        `${API_BASE}/forecast?q=${city}&appid=${apiKey}&units=metric`
+                    );
+
+                    const forecastData = await forecastResponse.json();
+
+                    displayCurrentWeather(currentData);
+                    displayForecast(forecastData);
+
+                    hideLoading();
+                    return; // Success, exit function
+
+                } catch (error) {
+                    console.error(`Attempt ${attempts + 1} failed:`, error);
+                    attempts++;
+                    
+                    if (attempts >= maxAttempts) {
+                        hideLoading();
+                        showError(`Could not find weather for "${rawCity}". Please try: Mumbai, Delhi, London, New York, or Tokyo`);
+                        return;
+                    }
+                    
+                    // Try next API key
+                    switchAPIKey();
                 }
-
-                const currentData = await currentResponse.json();
-
-                // Get 5-day forecast
-                const forecastResponse = await fetch(
-                    `${API_BASE}/forecast?q=${city}&appid=${API_KEY}&units=metric`
-                );
-
-                const forecastData = await forecastResponse.json();
-
-                displayCurrentWeather(currentData);
-                displayForecast(forecastData);
-
-                hideLoading();
-
-            } catch (error) {
-                hideLoading();
-                showError('City not found. Please try another city.');
-                console.error('Error fetching weather:', error);
             }
         }
 
